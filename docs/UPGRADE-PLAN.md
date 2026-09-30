@@ -12,8 +12,6 @@
 ## Backlog
 
 ### P0
-- Persist user data locally (AsyncStorage via `npx expo install
-  @react-native-async-storage/async-storage`) where the feature holds state.
 - Add real app icons (`assets/icon.png`, `assets/adaptive-icon.png`) and
   reference them from `app.json` before any store build.
 
@@ -42,3 +40,12 @@
 - `app.json`: removed references to missing icon files; Android package id
   no longer contains hyphens (invalid for Android application IDs).
 - Removed the placeholder Explore tab.
+
+## Done in this pass (pass 2)
+
+Score: 7/10 (was 6/10) — events now survive restarts; still no reminders/notifications or icons.
+
+- Events persist via AsyncStorage (`@react-native-async-storage/async-storage` 2.1.2) through `lib/usePersistentState.ts` with a versioned codec; `isCalendarEvent` drops malformed entries (bad date/time, empty title) instead of failing the load (tested).
+- Accessibility: add-event button names the selected date; profile links get link roles.
+- Advisories: `overrides.postcss ^8.5.28` clears the high-severity PostCSS advisory in Expo metro-config (minor bump). Remaining `image-size` (metro, bundler-only), `uuid` (via `xcode`) and `decode-uri-component` (via `query-string@7`) need an Expo SDK major upgrade; deliberately not auto-fixed.
+- Verified: typecheck, lint, 17 vitest tests, Android `expo export` bundle.

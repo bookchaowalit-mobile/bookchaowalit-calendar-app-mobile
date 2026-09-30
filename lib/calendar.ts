@@ -92,3 +92,17 @@ export function addEvent(events: CalendarEvent[], input: NewEventInput, id: stri
 export function removeEvent(events: CalendarEvent[], id: string): CalendarEvent[] {
   return events.filter((e) => e.id !== id);
 }
+
+/** Type guard used when loading events from local storage. */
+export function isCalendarEvent(value: unknown): value is CalendarEvent {
+  if (typeof value !== "object" || value === null) return false;
+  const e = value as Record<string, unknown>;
+  return (
+    typeof e.id === "string" &&
+    typeof e.date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+    typeof e.title === "string" &&
+    e.title.trim().length > 0 &&
+    (e.time === undefined || (typeof e.time === "string" && (e.time === "" || isValidTime(e.time))))
+  );
+}

@@ -7,6 +7,7 @@ import {
   buildMonthGrid,
   countByDate,
   eventsOn,
+  isCalendarEvent,
   monthTitle,
   removeEvent,
   todayKey,
@@ -14,15 +15,18 @@ import {
   weekdayLabels,
   type CalendarEvent,
 } from "../../lib/calendar";
+import { listCodec } from "../../lib/persist";
+import { usePersistentState } from "../../lib/usePersistentState";
 
 const WEEK_START = 0;
+const eventsCodec = listCodec(isCalendarEvent);
 
 export default function CalendarScreen() {
   const now = new Date();
   const today = todayKey(now);
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [selected, setSelected] = useState(today);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = usePersistentState<CalendarEvent[]>("calendar.events.v1", [], eventsCodec);
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +132,8 @@ export default function CalendarScreen() {
           accessibilityLabel="Event time, optional, 24-hour HH:MM"
         />
         {error && <Text style={styles.error}>{error}</Text>}
-        <Pressable style={styles.button} onPress={submit} accessibilityRole="button">
+        <Pressable style={styles.button} onPress={submit} accessibilityRole="button" accessibilityLabel={`Add event on ${selected}`}>
+
           <Text style={styles.buttonText}>Add to {selected}</Text>
         </Pressable>
       </View>
