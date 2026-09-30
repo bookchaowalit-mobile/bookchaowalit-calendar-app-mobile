@@ -5,9 +5,12 @@ import {
   buildMonthGrid,
   countByDate,
   dateKey,
+  dayA11yLabel,
   daysInMonth,
   eventsOn,
+  isRealDateKey,
   isValidTime,
+  normalizeTime,
   monthTitle,
   removeEvent,
   todayKey,
@@ -72,5 +75,33 @@ describe("events", () => {
   it("counts and removes", () => {
     expect(countByDate(base).get("2025-06-10")).toBe(2);
     expect(removeEvent(base, "1").map((e) => e.id)).toEqual(["2"]);
+  });
+});
+
+describe("pass 3 edge cases", () => {
+  it("rejects dates that do not exist", () => {
+    expect(isRealDateKey("2025-02-30")).toBe(false);
+    expect(isRealDateKey("2025-13-01")).toBe(false);
+    expect(isRealDateKey("2024-02-29")).toBe(true);
+    expect(isRealDateKey("2025-02-29")).toBe(false);
+    expect(validateEvent({ date: "2025-04-31", title: "x" })).toBe("Pick a date");
+  });
+  it("accepts single-digit hours and full-width digits, storing HH:MM", () => {
+    expect(normalizeTime("9:30")).toBe("09:30");
+    expect(normalizeTime("09.30")).toBe("09:30");
+    expect(normalizeTime("\uFF10\uFF19:\uFF13\uFF10")).toBe("09:30");
+    expect(normalizeTime("24:00")).toBeNull();
+    expect(normalizeTime("9:5")).toBeNull();
+    const [ev] = addEvent([], { date: "2025-06-03", title: "Standup", time: "9:30" }, "1");
+    expect(ev.time).toBe("09:30");
+  });
+  it("sorts a normalised 9:30 before 10:00", () => {
+    const evs = addEvent(addEvent([], { date: "2025-06-03", title: "B", time: "10:00" }, "1"), { date: "2025-06-03", title: "A", time: "9:30" }, "2");
+    expect(eventsOn(evs, "2025-06-03").map((e) => e.time)).toEqual(["09:30", "10:00"]);
+  });
+  it("reads grid cells as spoken dates with correct plurals", () => {
+    expect(dayA11yLabel("2025-06-03", 0)).toBe("Tuesday 3 June 2025");
+    expect(dayA11yLabel("2025-06-03", 1)).toBe("Tuesday 3 June 2025, 1 event");
+    expect(dayA11yLabel("2025-06-03", 2)).toBe("Tuesday 3 June 2025, 2 events");
   });
 });

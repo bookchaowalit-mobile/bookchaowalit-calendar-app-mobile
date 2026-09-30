@@ -58,13 +58,43 @@ export function isValidTime(time: string): boolean {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
 }
 
+/** True for a "YYYY-MM-DD" key naming a day that exists (rejects 2025-02-30). */
+export function isRealDateKey(key: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= daysInMonth(y, mo - 1);
+}
+
+/**
+ * Normalise a typed time to "HH:MM": accepts "9:30", "09.30" and full-width
+ * digits from CJK/Thai keyboards ("０９:３０"). Returns null when invalid.
+ */
+export function normalizeTime(text: string): string | null {
+  const m = /^(\d{1,2})[:.](\d{2})$/.exec(text.normalize("NFKC").trim());
+  if (!m) return null;
+  const t = `${m[1].padStart(2, "0")}:${m[2]}`;
+  return isValidTime(t) ? t : null;
+}
+
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** Screen-reader label for a grid cell: "Tuesday 3 June 2025, 1 event". */
+export function dayA11yLabel(key: string, count: number): string {
+  const [y, mo, d] = key.split("-").map(Number);
+  const date = new Date(y, mo - 1, d);
+  const events = count === 0 ? "" : `, ${count} ${count === 1 ? "event" : "events"}`;
+  return `${WEEKDAYS[date.getDay()]} ${d} ${MONTHS[mo - 1]} ${y}${events}`;
+}
+
 export type NewEventInput = { date: string; title: string; time?: string };
 
 export function validateEvent(input: NewEventInput): string | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return "Pick a date";
+  if (!isRealDateKey(input.date)) return "Pick a date";
   if (!input.title.trim()) return "Title is required";
   if (input.title.trim().length > 80) return "Title must be 80 characters or fewer";
-  if (input.time && !isValidTime(input.time)) return "Time must be HH:MM (24-hour)";
+  if (input.time && normalizeTime(input.time) === null) return "Time must be HH:MM (24-hour)";
   return null;
 }
 
@@ -85,7 +115,7 @@ export function addEvent(events: CalendarEvent[], input: NewEventInput, id: stri
   const error = validateEvent(input);
   if (error) throw new Error(error);
   const event: CalendarEvent = { id, date: input.date, title: input.title.trim() };
-  if (input.time) event.time = input.time;
+  if (input.time) event.time = normalizeTime(input.time) ?? input.time;
   return [...events, event];
 }
 

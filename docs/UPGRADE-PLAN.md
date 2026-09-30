@@ -49,3 +49,12 @@ Score: 7/10 (was 6/10) — events now survive restarts; still no reminders/notif
 - Accessibility: add-event button names the selected date; profile links get link roles.
 - Advisories: `overrides.postcss ^8.5.28` clears the high-severity PostCSS advisory in Expo metro-config (minor bump). Remaining `image-size` (metro, bundler-only), `uuid` (via `xcode`) and `decode-uri-component` (via `query-string@7`) need an Expo SDK major upgrade; deliberately not auto-fixed.
 - Verified: typecheck, lint, 17 vitest tests, Android `expo export` bundle.
+
+## Done in this pass (pass 3)
+
+Score: 7.5/10 (was 7/10) — edge-case hunt in `lib/calendar.ts`.
+
+- Bug: `validateEvent` only checked the `YYYY-MM-DD` shape, so "2025-02-30" was accepted and the event could never appear in the grid; `isRealDateKey` checks month length and leap years.
+- Bug: "9:30" was rejected and would have sorted after "10:00" if stored; `normalizeTime` accepts "9:30", "09.30" and full-width digits and stores `HH:MM`.
+- a11y: grid cells read "Tuesday 3 June 2025, 1 event" instead of "2025-06-03, 1 event(s)".
+- Verified: typecheck, lint, 21 vitest tests, Android `expo export`.

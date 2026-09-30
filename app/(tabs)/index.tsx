@@ -6,6 +6,7 @@ import {
   addMonths,
   buildMonthGrid,
   countByDate,
+  dayA11yLabel,
   eventsOn,
   isCalendarEvent,
   monthTitle,
@@ -77,7 +78,7 @@ export default function CalendarScreen() {
               onPress={() => setSelected(cell.key)}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
-              accessibilityLabel={`${cell.key}${count ? `, ${count} event(s)` : ""}`}
+              accessibilityLabel={dayA11yLabel(cell.key, count)}
             >
               <Text
                 style={[
